@@ -4,6 +4,8 @@ import { builtinModules as nodeBuiltins } from "module";
 import * as esbuild from "esbuild";
 import debounce from "lodash.debounce";
 import chokidar from "chokidar";
+import GlobalsPolyfills from "@esbuild-plugins/node-globals-polyfill";
+import NodeModulesPolyfills from "@esbuild-plugins/node-modules-polyfill";
 
 import { BuildMode, BuildTarget } from "./build";
 import type { RemixConfig } from "./config";
@@ -322,12 +324,18 @@ async function createBrowserBuild(
     assetNames: "_assets/[name]-[hash]",
     publicPath: config.publicPath,
     define: {
-      "process.env.NODE_ENV": JSON.stringify(options.mode)
+      "process.env.NODE_ENV": JSON.stringify(options.mode),
+      global: "window"
     },
     plugins: [
       mdxPlugin(config),
       browserRouteModulesPlugin(config, /\?browser$/),
-      emptyModulesPlugin(config, /\.server(\.[jt]sx?)?$/)
+      emptyModulesPlugin(config, /\.server(\.[jt]sx?)?$/),
+      NodeModulesPolyfills(),
+      GlobalsPolyfills({
+        process: true,
+        buffer: true
+      })
     ]
   });
 }
